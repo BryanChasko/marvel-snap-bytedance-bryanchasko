@@ -2,7 +2,51 @@
 
 Architect: Stratia (she/her), stratia-gander-arch
 
-This document describes the 8-layer architecture of the Marvel Snap Cybernetic Loop — a privacy-preserving pipeline that ingests screenshots, reconstructs games, analyzes play patterns, and publishes curated public artifacts.
+This document describes the architecture of the Marvel Snap Cybernetic Loop — a privacy-preserving pipeline that ingests screenshots, reconstructs games, analyzes play patterns, and publishes curated public artifacts.
+
+## CSWR — Conversation-Scoped Work Reference
+
+The traceability spine of the entire system. Every agent and subagent must attach to a CSWR before doing anything.
+
+A CSWR is:
+- `issue_id` or `todo_id` or `rock_id` — the work item
+- `spec_id` (optional, recommended) — the spec driving the work
+- `conversation_id` — unique per user session
+
+No action without CSWR. This is enforced at the steering layer.
+
+### CSWR Infrastructure Layers
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Layer 0: Prompt Ledger                              │
+│  Stores every prompt (including subagent prompts)    │
+│  with CSWR metadata attached.                        │
+├─────────────────────────────────────────────────────┤
+│  Layer 1: Steering                                   │
+│  Enforces: "No action without CSWR."                 │
+│  Agent CLI requires CSWR before any tool call.       │
+├─────────────────────────────────────────────────────┤
+│  Layer 2: Knowledge Bases                            │
+│  Specs, docs, semantic search — all indexed by       │
+│  spec_id and issue_id.                               │
+├─────────────────────────────────────────────────────┤
+│  Layer 3: Live Context                               │
+│  Runtime signals, ephemeral data, PR diffs,          │
+│  CI results.                                         │
+├─────────────────────────────────────────────────────┤
+│  Layer 4: GitHub Integration                         │
+│  CSWR becomes a branch, PR, or issue.                │
+│  All git operations carry CSWR in commit metadata.   │
+└─────────────────────────────────────────────────────┘
+```
+
+### CSWR in this project
+
+For the Marvel Snap pipeline, the CSWR anchors to:
+- GitHub issues (#1-#19 and growing) as `issue_id`
+- `.kiro/specs/marvel-snap-pipeline/` as `spec_id`
+- Each kiro-cli session as `conversation_id`
 
 ## Privacy Boundaries
 
@@ -14,7 +58,7 @@ This document describes the 8-layer architecture of the Marvel Snap Cybernetic L
 │                                                      │
 │  Runs: LOCAL ONLY via goosecli                       │
 │  Models: Local models only (no vendor calls)         │
-│  Layer: 1 (Ingestion)                                │
+│  Pipeline Layer: 1 (Ingestion)                       │
 └─────────────────────────────────────────────────────┘
          │ sanitized images (cropped, anonymized)
          ▼
@@ -25,7 +69,7 @@ This document describes the 8-layer architecture of the Marvel Snap Cybernetic L
 │                                                      │
 │  Runs: Local + Lambda + OpenRouter                   │
 │  Models: UI-TARS 1.5 7B, Seed OSS 36B               │
-│  Layers: 2-4 (Classification, Extraction, Recon)     │
+│  Pipeline Layers: 2-4 (Classification, Recon, Analysis)│
 └─────────────────────────────────────────────────────┘
          │ structured JSON game records
          ▼
@@ -35,11 +79,11 @@ This document describes the 8-layer architecture of the Marvel Snap Cybernetic L
 │  blog content, GitHub artifacts                      │
 │                                                      │
 │  Runs: Lambda + static site                          │
-│  Layers: 5-8 (Artifacts, Website, Loop, Narrative)   │
+│  Pipeline Layers: 5-8 (Artifacts, Website, Loop, Narrative)│
 └─────────────────────────────────────────────────────┘
 ```
 
-## Layer Architecture
+## Pipeline Layer Architecture
 
 ### Layer 1: Private Ingestion (Google Photos → Local Staging)
 
@@ -155,6 +199,7 @@ All external API calls (OpenRouter, future Marvel API, tournament APIs) route th
 ## Tracing & Observability
 
 - OpenTelemetry instrumentation across all layers
+- All OTEL spans carry CSWR metadata (issue_id, spec_id, conversation_id)
 - CI policy checks enforce privacy boundaries
 - No trace data contains PII or credentials
 - Ralph Wiggum (ralph-wiggum-otel-trace) handles trace analysis
@@ -166,3 +211,4 @@ Stratia designs the recipe YAML. Ellow builds it. The recipe defines:
 - Model tier assignments (local vs OpenRouter)
 - Provider routing topology
 - Privacy boundary enforcement
+- CSWR attachment requirement for all agents
