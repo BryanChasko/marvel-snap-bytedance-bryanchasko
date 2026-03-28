@@ -1,0 +1,43 @@
+# Ignore secrets and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+token.json
+client_secret*.json
+
+# Ignore raw screenshots (may contain PII)
+staging/raw/*
+!staging/raw/.gitkeep
+
+# Ignore local model caches
+models/
+*.gguf
+*.bin
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Build
+dist/
+build/
