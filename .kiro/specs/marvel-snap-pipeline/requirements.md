@@ -1,18 +1,35 @@
 # Marvel Snap Screenshot Pipeline — Requirements
 
-## Open Questions
+## Resolved
 
-- What is "stratia" and how should it be used for architectural planning?
-- Which ByteDance model(s) specifically for image analysis via goosecli?
-- Marvel API access scope — which endpoints are available?
-- Target website platform (static site, existing blog, etc.)?
+- Stratia (stratia-gander-arch) is the haunting's architect. She designs GooseCLI agent blueprints, recipe YAML, tier mappings, and provider routing. Blueprint-first, read-only during drafting. She owns the design.md phase.
+- ByteDance models on OpenRouter: UI-TARS 1.5 7B (vision/GUI, $0.10/$0.20/M), Seed OSS 36B Instruct (reasoning, 131K ctx), Seedance 1.5 Pro (video gen, alpha)
+- Website: bryanchasko.com. Blog: builder.aws.com/community/@bryanchasko (article about the process, written after completion)
+
+## Backlog (not this sprint)
+
+- Marvel API integration for card/character lore and assets
+- Seedance 1.5 Pro for game replay video generation
+- Discord and Twitch integration points
 
 ## Constraints
 
 - Google Photos interactions MUST use local tooling and locally hosted agents via goosecli. No ByteDance models touch personal Google account data.
-- ByteDance models are used exclusively for Snap-specific processing (classification, metadata extraction, game analysis).
+- ByteDance models via OpenRouter are used for Snap-specific processing (classification, metadata extraction, game analysis).
 - AWS Lambda is available for Snap processing and public-facing pipeline components.
 - Public outputs must respect Snap asset usage guidelines.
+
+## Model Assignments
+
+- UI-TARS 1.5 7B (bytedance/ui-tars-1.5-7b): Screenshot classification, Snap metadata extraction, visual game state recognition. Multimodal vision-language agent built for GUI/game environments.
+- Seed OSS 36B Instruct (bytedance/seed-oss-36b-instruct): Game reconstruction reasoning, analysis logic, structured data processing. 131K context window.
+
+## Haunting Agents Involved
+
+- stratia-gander-arch: Architectural design, recipe YAML, provider routing
+- ellow-goosecli-dev: GooseCLI agent implementation
+- myrren-openrouter-arch: OpenRouter model routing topology
+- harald-gander-anchor: Coordination and sprint tracking
 
 ## User Stories
 
@@ -31,7 +48,7 @@ Acceptance Criteria:
 As a Snap player, I want screenshots automatically classified as Marvel Snap or not so only relevant images enter the pipeline.
 
 Acceptance Criteria:
-- ByteDance model via goosecli classifies images as Snap/not-Snap
+- UI-TARS 1.5 7B via goosecli classifies images as Snap/not-Snap
 - Classification can run locally or on Lambda
 - Non-Snap images are tagged and excluded from further Snap processing
 - Classification confidence score is stored
@@ -42,7 +59,7 @@ As a Snap player, I want game metadata extracted from Snap screenshots so I can 
 
 Acceptance Criteria:
 - Extracts: cards played, locations revealed, turn number, energy state, score, opponent name
-- ByteDance model handles OCR and visual recognition
+- UI-TARS 1.5 7B handles visual recognition of game UI elements
 - Metadata stored in structured format (JSON)
 - Handles partial/unclear screenshots gracefully
 
@@ -52,7 +69,7 @@ As a Snap player, I want sequential screenshots grouped and assembled into compl
 
 Acceptance Criteria:
 - Screenshots are grouped by game session (timestamp proximity, visual continuity)
-- Turn-by-turn game state is reconstructed from metadata
+- Seed OSS 36B Instruct reasons over metadata to reconstruct turn-by-turn game state
 - Game outcome (win/loss/snap/retreat) is captured
 - Missing turns are flagged, not fabricated
 
@@ -71,17 +88,17 @@ Acceptance Criteria:
 As a content creator, I want game data enriched with external sources so my analysis has broader context.
 
 Acceptance Criteria:
-- Marvel API integration for card/character lore and assets
 - Tournament calendar integration for event context
 - Snap community data (meta decks, tier lists) where available
-- Discord and Twitch integration points for content sharing
+- Marvel API integration (backlogged — not this sprint)
 
 ### Story 7: Public Showcase
 
-As a content creator, I want to publish game analysis and workflow artifacts on my website, blog, and GitHub so others can see and learn from the process.
+As a content creator, I want to publish game analysis and workflow artifacts on bryanchasko.com and GitHub so others can see and learn from the process.
 
 Acceptance Criteria:
-- Game reconstructions rendered for web display
+- Game reconstructions rendered for web display on bryanchasko.com
 - Analysis dashboards or visualizations are embeddable
 - Workflow itself is documented and visible on GitHub
 - Personal data (Google account, private photos) never exposed
+- Blog article on builder.aws.com/community/@bryanchasko documenting the process (post-completion)
