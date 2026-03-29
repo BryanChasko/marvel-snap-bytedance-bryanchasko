@@ -1,67 +1,81 @@
 # Private Ingestion — Requirements
 
 Spec ID: `private-ingestion`
-Privacy Zone: PRIVATE
+Privacy Zone: LOCAL (no ByteDance models touch Google credentials or raw photos)
 Execution Platform: Gander (goose-cli, local agent on aihost)
 CSWR Anchor: GitHub issue #1, #13, #14
 
+## Context
+
+Google Photos Library API removed `photoslibrary.readonly` scope in March 2025. Background watchers that read a user's full library are no longer possible. Our approach:
+
+1. **Bootstrap:** Google Takeout bulk export of existing screenshots to local staging
+2. **Steady state:** Local folder watcher monitors a staging directory on aihost
+3. **Backlog:** Drive API bridge utility for ongoing sync (future sprint)
+
 ## Requirements (EARS Notation)
 
-### R1: Screenshot Detection
+### R1: Bulk Import
 
-WHEN a new image appears in the user's Google Photos library
-THE SYSTEM SHALL detect it within the configured polling interval
-AND copy it to the local staging directory on aihost.
+WHEN the user exports screenshots via Google Takeout
+THE SYSTEM SHALL ingest all images from the export directory into the local staging folder
+AND preserve original filenames and EXIF timestamps.
 
-### R2: Local-Only Execution
+### R2: Local Folder Watcher
+
+WHEN a new image file appears in the local staging directory
+THE SYSTEM SHALL detect it within 60 seconds
+AND queue it for the classification pipeline.
+
+### R3: Local-Only Execution
 
 WHEN the ingestion agent runs
 THE SYSTEM SHALL execute entirely on the local machine via goose-cli
-AND SHALL NOT make any external API calls except to the Google Photos API.
+AND SHALL NOT send any data to external model providers.
 
-[NEEDS CLARIFICATION: Which Google Photos API client library? Python via google-auth + google-api-python-client, or a lighter alternative?]
+### R4: Credential Isolation
 
-### R3: Original Deletion
-
-WHEN a screenshot has been successfully copied to local staging AND processing is confirmed complete
-THE SYSTEM SHALL delete the original from Google Photos via the API
-AND log the deletion with timestamp and confirmation status.
-
-[NEEDS CLARIFICATION: What defines "processing complete"? After classification? After full game reconstruction? After public artifact generation?]
-
-### R4: Deletion Safety
-
-WHEN the system attempts to delete an original from Google Photos
-THE SYSTEM SHALL support a dry-run mode that logs intended deletions without executing them.
-
-### R5: Credential Isolation
-
-WHEN Google OAuth tokens are used
+WHEN any Google credentials are used (Takeout, future Drive bridge)
 THE SYSTEM SHALL store them only in local .env files
-AND SHALL NOT pass them to any external model, proxy, or cloud service.
+AND SHALL NOT pass them to ByteDance models, OpenRouter, or any external service.
 
-### R6: Staging Directory
+### R5: Staging Directory Safety
 
-WHEN images are copied to local staging
+WHEN images are written to local staging
 THE SYSTEM SHALL write them to a gitignored directory
-AND SHALL NOT commit raw screenshots to the public repository under any circumstances.
+AND SHALL NOT commit raw screenshots to the public repository.
+
+### R6: Processing Complete Definition
+
+WHEN a screenshot's game data has been ingested into Qdrant (snap-game-records collection)
+THE SYSTEM SHALL mark the screenshot as processed.
+WHEN a processed screenshot is visually noteworthy
+THE SYSTEM SHALL copy it to an S3 highlights bucket before cleanup.
+
+### R7: Cleanup After Processing
+
+WHEN a screenshot is marked as processed AND is not flagged as noteworthy
+THE SYSTEM SHALL delete it from local staging
+AND log the cleanup with timestamp.
 
 ## Gander Execution
 
-This layer maps to a goose-cli recipe. The recipe should:
-- Use local Ollama models only (no OpenRouter calls)
-- Mount the Google Photos OAuth token from .env
-- Use the filesystem MCP launcher for local file operations
-- Follow the lead/worker pattern: llama3.1:8b for execution
-- Attach CSWR metadata via prompt-ledger.sh
+Sub-recipe `snap-ingest.yaml` invoked by the `snap-pipeline.yaml` orchestrator. Pattern follows the gander's existing sub-recipe architecture (e.g., ghostwriter-draft.yaml invoking sub-kerouac, sub-voss).
 
-[NEEDS CLARIFICATION: Should this be a standalone recipe or a sub-recipe invoked by a pipeline orchestrator recipe?]
+- Lead/worker: llama3.1:8b / llama3.1:8b (local only, no OpenRouter)
+- MCP extensions: filesystem
+- CSWR: attached via prompt-ledger.sh
+
+## Backlog
+
+- Drive API bridge utility for ongoing photo sync (future sprint)
+- Google Photos Picker API integration if interactive selection is needed
 
 ## Validation Checklist
 
 - [x] All requirements use EARS notation
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Every requirement is testable
-- [x] Privacy zone declared (PRIVATE)
-- [ ] Gander recipe identified
+- [x] Privacy zone declared (LOCAL)
+- [x] Gander recipe identified (sub-recipe of orchestrator)
 - [x] CSWR anchor defined
