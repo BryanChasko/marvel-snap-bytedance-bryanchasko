@@ -1,16 +1,20 @@
 # Classification & Metadata — Requirements
 
 Spec ID: `classification-metadata`
-Privacy Zone: HYBRID
+Privacy Zone: HYBRID (local preprocessing, ByteDance models see only game screenshots)
 Execution Platform: Gander (goose-cli) + OpenRouter via goose-proxy
 CSWR Anchor: GitHub issue #2, #15, #17, #18
+
+## Strategy
+
+Start with OpenRouter (ByteDance models) to build a clean pipeline. Once established, migrate to local models via the vision-server MCP launcher (which is designed for local models only).
 
 ## Requirements (EARS Notation)
 
 ### R1: Preprocessing Gate
 
 WHEN a raw screenshot enters the classification pipeline
-THE SYSTEM SHALL first run local preprocessing (crop, EXIF strip, PII blur)
+THE SYSTEM SHALL first run local preprocessing (crop, EXIF strip)
 AND SHALL NOT send any unprocessed image to an external model.
 
 ### R2: Snap Classification
@@ -21,10 +25,10 @@ AND return a classification (snap/not-snap) with a confidence score.
 
 ### R3: Metadata Extraction
 
-WHEN an image is classified as Marvel Snap with confidence >= threshold
-THE SYSTEM SHALL extract game metadata: cards played, locations revealed, turn number, energy state, score, opponent identifier (anonymized).
+WHEN an image is classified as Marvel Snap with confidence >= 0.7
+THE SYSTEM SHALL extract game metadata: cards played, locations revealed, turn number, energy state, score, opponent identifier.
 
-[NEEDS CLARIFICATION: What confidence threshold for classification? 0.8? 0.9? Configurable?]
+Threshold is configurable via environment variable. Default 0.7 — for a personal project, false positives just mean extra processing, not harm. Err toward inclusion.
 
 ### R4: Structured Output
 
@@ -42,30 +46,26 @@ AND SHALL NOT fabricate missing data.
 
 WHEN any call is made to an external model
 THE SYSTEM SHALL route it through the goose-proxy with payload filters
-AND enforce the configured cost cap.
+AND enforce the $0.01/day cost cap.
 
 ## Gander Execution
 
-This layer requires adding ByteDance models to the gander's goose-proxy.py MODEL_MAP:
+Sub-recipe `snap-classify.yaml` invoked by `snap-pipeline.yaml` orchestrator.
 
-| Alias | Provider | Model ID |
-|-------|----------|----------|
-| `bytedance-vision` | OpenRouter | `bytedance/ui-tars-1.5-7b` |
-| `bytedance-reason` | OpenRouter | `bytedance/seed-oss-36b-instruct` |
-
-Recipe structure:
 - Lead model: `bytedance-vision` (UI-TARS for image analysis)
 - Worker model: `llama3.1:8b` (local, for structured output formatting)
-- MCP extensions: filesystem, qdrant-shared-knowledge, vision-server
-- Sub-recipe pattern: preprocessing (local) → classification (hybrid) → extraction (hybrid)
+- MCP extensions: filesystem, qdrant-shared-knowledge
+- Vision-server MCP is local-only — not used in v1. Target for v2 migration to local models.
 
-[NEEDS CLARIFICATION: Does the existing vision-server MCP launcher in the gander support sending images to OpenRouter models, or does it only work with local models?]
+## Backlog
+
+- Migrate from OpenRouter to local models via vision-server MCP once pipeline is proven
 
 ## Validation Checklist
 
 - [x] All requirements use EARS notation
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Every requirement is testable
 - [x] Privacy zone declared (HYBRID)
-- [ ] Gander recipe identified
+- [x] Gander recipe identified (sub-recipe of orchestrator)
 - [x] CSWR anchor defined

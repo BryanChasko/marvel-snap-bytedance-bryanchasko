@@ -1,7 +1,7 @@
 # Vendor Gateway — Requirements
 
 Spec ID: `vendor-gateway`
-Privacy Zone: Cross-cutting (enforces HYBRID/PUBLIC boundary)
+Privacy Zone: Cross-cutting (keeps ByteDance away from Google credentials)
 Execution Platform: Gander goose-proxy.py
 CSWR Anchor: GitHub issue #11, #16
 
@@ -20,11 +20,12 @@ AND log the rejection with the CSWR of the originating agent.
 
 ### R3: Cost Caps
 
-WHEN the cumulative daily cost exceeds the configured cap
+WHEN the cumulative daily cost exceeds $0.01
 THE SYSTEM SHALL reject further external model calls
 AND return a clear error to the calling agent.
 
-[NEEDS CLARIFICATION: What daily cost cap? $5? $10? Configurable per-model?]
+Cost cap is configurable via environment variable. Default: $0.01/day.
+At UI-TARS pricing ($0.10/$0.20 per M tokens), $0.01 allows ~50-100 screenshot classifications per day.
 
 ### R4: Request Logging
 
@@ -47,18 +48,18 @@ AND fall back to the next available model in the routing chain.
 
 ## Gander Execution
 
-This is an extension to the existing goose-proxy.py in goosecli-heraldstack-gander. Changes needed:
+Extension to goose-proxy.py in goosecli-heraldstack-gander:
 - Add ByteDance entries to MODEL_MAP
 - Add PII pattern filter to request pipeline
-- Add cost tracking and cap enforcement
+- Add cost tracking via Valkey (daily counter, reset at midnight)
 - Add CSWR metadata to request logs
 
-Cedar policy alignment: no-secrets-in-commits.cedar already covers secret patterns. Extend with a payload-filter policy.
+Cedar policy alignment: no-secrets-in-commits.cedar already covers secret patterns.
 
 ## Validation Checklist
 
 - [x] All requirements use EARS notation
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Every requirement is testable
 - [x] Privacy zone declared (cross-cutting)
 - [x] Gander execution identified (goose-proxy.py extension)
