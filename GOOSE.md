@@ -30,8 +30,8 @@ all external model calls go through goose-proxy at localhost:4000
 
 | Alias | Model | Use Case |
 |-------|-------|----------|
-| `bytedance-vision` | bytedance/ui-tars-1.5-7b | screenshot classification, UI recognition |
-| `bytedance-reason` | bytedance/seed-oss-36b-instruct | game reconstruction, analysis reasoning |
+| `bytedance-vision` | bytedance-seed/seed-2.0-mini | screenshot classification, image input support |
+| `bytedance-reason` | bytedance-seed/seed-2.0-lite | game reconstruction, analysis reasoning |
 
 daily cost cap: $0.01 — enforced by goose-proxy via valkey counter
 

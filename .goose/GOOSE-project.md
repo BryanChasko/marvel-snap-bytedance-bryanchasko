@@ -10,9 +10,14 @@ use qwen-reason as your lead model for orchestration, planning, architecture dec
 
 use llama3.1:8b as worker for file operations, formatting, simple tasks
 
-use mistral-nemo for mid-tier work: code review, test writing, structured output
-
 do NOT use llama3.1:8b for orchestration or complex reasoning — it will hallucinate the architecture
+
+for pipeline recipe runs:
+- snap-ingest runs on llama3.1:8b (local, free)
+- snap-classify runs on bytedance-vision (bytedance-seed/seed-2.0-mini via openrouter)
+- snap-reconstruct runs on bytedance-reason (bytedance-seed/seed-2.0-lite via openrouter)
+- snap-pipeline orchestrator runs on qwen-reason
+- daily cost cap: $0.01 enforced via valkey key "snap:daily_cost"
 
 ### privacy zones — inviolable
 

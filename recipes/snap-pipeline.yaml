@@ -1,0 +1,169 @@
+version: "1.0.0"
+title: "Snap Pipeline — full orchestrator"
+description: |
+  Orchestrates the full Marvel Snap Cybernetic Loop: ingest → classify → reconstruct.
+  Runs snap-ingest, then snap-classify, then snap-reconstruct in sequence.
+  Uses qwen-reason for orchestration decisions. Sub-recipes handle their own models.
+  Reports a pipeline summary on completion.
+
+instructions: |
+  # Role
+  You are the snap pipeline orchestrator. You coordinate three sub-recipe phases in
+  sequence: ingest, classify, reconstruct. You do not process images or build game
+  records yourself — you dispatch to sub-recipes, collect results, and surface the
+  pipeline summary. You run on qwen-reason for decision-making.
+
+  # Instructions
+  Run the three pipeline phases in sequence. After each phase: check the result.
+  If a phase reports 0 items processed (and the previous phase produced output),
+  halt and surface the issue — do not proceed with empty data.
+
+  Before classify phase: check valkey "snap:daily_cost". If >= 0.01, halt and report
+  cost cap hit — do not run classify or reconstruct.
+
+  # Steps
+  1. Invoke ingest sub-recipe with staging_dir={{ staging_dir }}, queue_dir={{ queue_dir }}.
+     Collect: queued_count, skipped_count, errors.
+     If queued_count == 0: report "nothing to process" and exit cleanly.
+
+  2. Check daily cost: read valkey key "snap:daily_cost". If >= 0.01, report cap and halt.
+
+  3. Invoke classify sub-recipe with queue_dir={{ queue_dir }}, output_dir={{ classified_dir }},
+     confidence_threshold={{ confidence_threshold }}.
+     Collect: classified_count, snap_count, not_snap_count, cost_incurred.
+     Update valkey "snap:daily_cost" += cost_incurred.
+     If snap_count == 0: report "no snap screenshots found" and exit cleanly.
+
+  4. Invoke reconstruct sub-recipe with classified_dir={{ classified_dir }},
+     output_dir={{ output_dir }}, session_window_minutes={{ session_window_minutes }}.
+     Collect: sessions_found, records_built, records_stored, validation_failures.
+
+  5. Emit pipeline summary JSON.
+
+  # End goal
+  Full pipeline run complete. Pipeline summary JSON emitted with counts for all phases.
+  Game records stored in qdrant snap-game-records.
+
+  # Narrowing
+  Do not skip phases or short-circuit the sequence.
+  Do not call external models directly — all model calls happen inside sub-recipes.
+  If any sub-recipe returns an error: surface the error with the phase name and halt.
+  Daily cost cap is enforced at step 2 — do not bypass it.
+
+parameters:
+  - key: staging_dir
+    input_type: string
+    requirement: optional
+    default: "staging/raw"
+    description: "Raw screenshots directory"
+  - key: queue_dir
+    input_type: string
+    requirement: optional
+    default: "staging/queued"
+    description: "Ingest output / classify input directory"
+  - key: classified_dir
+    input_type: string
+    requirement: optional
+    default: "staging/classified"
+    description: "Classify output / reconstruct input directory"
+  - key: output_dir
+    input_type: string
+    requirement: optional
+    default: "staging/reconstructed"
+    description: "Reconstruction output directory for GameRecord JSON files"
+  - key: confidence_threshold
+    input_type: string
+    requirement: optional
+    default: "0.7"
+    description: "Vision classification confidence threshold"
+  - key: session_window_minutes
+    input_type: string
+    requirement: optional
+    default: "10"
+    description: "Screenshot grouping window in minutes"
+
+sub_recipes:
+  - name: "ingest"
+    path: "recipes/snap-ingest.yaml"
+    values: {}
+
+  - name: "classify"
+    path: "recipes/snap-classify.yaml"
+    values: {}
+
+  - name: "reconstruct"
+    path: "recipes/snap-reconstruct.yaml"
+    values: {}
+
+extensions:
+  developer:
+    type: builtin
+    name: developer
+    timeout: 600
+  valkey:
+    name: valkey
+    type: streamable_http
+    uri: http://host.docker.internal:8110/mcp
+    timeout: 120
+  qdrant-shared:
+    name: qdrant-shared
+    type: streamable_http
+    uri: http://host.docker.internal:8102/mcp/
+    timeout: 300
+
+settings:
+  goose_provider: "openai"
+  goose_model: "qwen-reason"
+  temperature: 0.2
+
+prompt: |
+  Begin snap pipeline.
+
+  Staging dir: {{ staging_dir }}
+  Queue dir: {{ queue_dir }}
+  Classified dir: {{ classified_dir }}
+  Output dir: {{ output_dir }}
+  Confidence threshold: {{ confidence_threshold }}
+  Session window: {{ session_window_minutes }} minutes
+
+  Run phases in sequence: ingest → classify → reconstruct.
+  Check cost cap before classify. Halt if any phase errors.
+  Emit pipeline summary JSON on completion.
+
+response:
+  json_schema:
+    type: object
+    properties:
+      pipeline_run_id:
+        type: string
+        description: "Unique ID for this pipeline run (ISO timestamp)"
+      phases:
+        type: object
+        properties:
+          ingest:
+            type: object
+            properties:
+              queued_count: {type: number}
+              skipped_count: {type: number}
+              errors: {type: number}
+          classify:
+            type: object
+            properties:
+              classified_count: {type: number}
+              snap_count: {type: number}
+              not_snap_count: {type: number}
+              cost_incurred: {type: number}
+              cost_cap_hit: {type: boolean}
+          reconstruct:
+            type: object
+            properties:
+              sessions_found: {type: number}
+              records_built: {type: number}
+              records_stored: {type: number}
+              validation_failures: {type: number}
+      total_cost_today:
+        type: number
+        description: "Running daily cost after this run (from valkey)"
+    required:
+      - pipeline_run_id
+      - phases
