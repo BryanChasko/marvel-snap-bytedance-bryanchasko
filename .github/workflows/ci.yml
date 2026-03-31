@@ -1,0 +1,102 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: lint + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: format check
+        run: cargo fmt --check
+
+      - name: clippy
+        run: cargo clippy -- -D warnings
+
+      - name: test
+        run: cargo test
+
+  build:
+    name: build release
+    needs: check
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: build
+        run: cargo build --release
+
+      - name: upload binary
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: snap-pipeline-linux
+          path: target/release/snap-pipeline
+
+  schema-validate:
+    name: validate fixtures against schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: install jsonschema
+        run: pip install jsonschema
+
+      - name: validate sample game record
+        run: |
+          python3 -c "
+          import json
+          from jsonschema import validate
+          schema = json.load(open('specs/game-reconstruction/schema.json'))
+          record = json.load(open('fixtures/sample_game_record.json'))
+          validate(record, schema)
+          print('sample_game_record.json validates against schema')
+          "
+
+  secrets-scan:
+    name: no secrets in repo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: scan for secrets patterns
+        run: |
+          FOUND=0
+          for pattern in 'AKIA[0-9A-Z]{16}' 'sk-[a-zA-Z0-9]{48}' 'ghp_[a-zA-Z0-9]{36}' 'password\s*=' 'secret\s*='; do
+            if grep -rn --include='*.rs' --include='*.toml' --include='*.yaml' --include='*.json' --include='*.md' \
+               -E "$pattern" . 2>/dev/null | grep -v '.github/workflows/ci.yml' | grep -v 'fixtures/'; then
+              echo "potential secret pattern found: $pattern"
+              FOUND=1
+            fi
+          done
+          if [ "$FOUND" -eq 1 ]; then
+            echo "secrets scan failed — review matches above"
+            exit 1
+          fi
+          echo "no secrets detected"

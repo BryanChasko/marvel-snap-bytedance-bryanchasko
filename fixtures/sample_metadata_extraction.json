@@ -1,0 +1,22 @@
+{
+  "image_path": "IMG_20260315_142301.png",
+  "exif_timestamp": "2026-03-15T14:23:01Z",
+  "turn_number": 4,
+  "energy": 4,
+  "locations": [
+    { "index": 0, "name": "Ruins", "confidence": 0.91 },
+    { "index": 1, "name": "The Raft", "confidence": 0.87 },
+    { "index": 2, "name": "Limbo", "confidence": 0.72 }
+  ],
+  "player_cards_played": [
+    { "card_name": "Iron Man", "location_index": 1, "energy_cost": 5, "power": 0, "confidence": 0.88 },
+    { "card_name": "Ant Man", "location_index": 0, "energy_cost": 1, "power": 1, "confidence": 0.95 }
+  ],
+  "opponent_cards_played": [
+    { "card_name": "Cosmo", "location_index": 1, "energy_cost": 3, "power": 3, "confidence": 0.79 }
+  ],
+  "player_score": 12,
+  "opponent_score": 8,
+  "cube_state": { "snapped": false, "final_value": 1 },
+  "confidence": 0.85
+}

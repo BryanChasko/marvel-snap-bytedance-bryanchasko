@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GameRecord",
+  "description": "structured record of a single marvel snap game, reconstructed from classified screenshots",
+  "type": "object",
+  "required": [
+    "game_id",
+    "schema_version",
+    "outcome",
+    "locations",
+    "turns",
+    "cube_state",
+    "source_screenshots",
+    "confidence_scores"
+  ],
+  "properties": {
+    "game_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "deterministic uuid derived from session timestamp + content hash"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "player_deck": {
+      "type": ["array", "null"],
+      "items": { "type": "string" },
+      "description": "card names in player deck, null if not fully identified"
+    },
+    "opponent_deck": {
+      "type": ["array", "null"],
+      "items": { "type": "string" },
+      "description": "card names observed in opponent deck, null if not identified"
+    },
+    "locations": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 3,
+      "items": { "$ref": "#/$defs/location_state" }
+    },
+    "turns": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 7,
+      "items": { "$ref": "#/$defs/turn_record" }
+    },
+    "cube_state": { "$ref": "#/$defs/cube_state" },
+    "outcome": {
+      "type": "string",
+      "enum": ["win", "loss", "retreat_player", "retreat_opponent"]
+    },
+    "source_screenshots": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "filename of source screenshot (no path, privacy zone safe)"
+      },
+      "minItems": 1
+    },
+    "confidence_scores": { "$ref": "#/$defs/confidence_scores" },
+    "session_start": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "earliest EXIF timestamp in the session group"
+    },
+    "session_end": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "latest EXIF timestamp in the session group"
+    }
+  },
+  "$defs": {
+    "card_play": {
+      "type": "object",
+      "required": ["card_name", "location_index", "confidence"],
+      "properties": {
+        "card_name": { "type": "string" },
+        "location_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "0-indexed location (left=0, center=1, right=2)"
+        },
+        "energy_cost": { "type": ["integer", "null"], "minimum": 0, "maximum": 6 },
+        "power": { "type": ["integer", "null"] },
+        "confidence": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "location_state": {
+      "type": "object",
+      "required": ["index", "name_confidence"],
+      "properties": {
+        "index": { "type": "integer", "minimum": 0, "maximum": 2 },
+        "name": { "type": ["string", "null"] },
+        "name_confidence": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "revealed_turn": { "type": ["integer", "null"], "minimum": 1, "maximum": 6 },
+        "player_cards": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "opponent_cards": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "player_power": { "type": ["integer", "null"] },
+        "opponent_power": { "type": ["integer", "null"] }
+      }
+    },
+    "turn_record": {
+      "type": "object",
+      "required": ["turn_number"],
+      "properties": {
+        "turn_number": { "type": "integer", "minimum": 1, "maximum": 7 },
+        "missing": {
+          "type": "boolean",
+          "default": false,
+          "description": "true when this turn was not captured — [MISSING_TURN] marker"
+        },
+        "energy": { "type": ["integer", "null"], "minimum": 0, "maximum": 6 },
+        "player_cards_played": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/card_play" }
+        },
+        "opponent_cards_played": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/card_play" }
+        },
+        "player_score": { "type": ["integer", "null"] },
+        "opponent_score": { "type": ["integer", "null"] },
+        "source_screenshot": {
+          "type": ["string", "null"],
+          "description": "filename of screenshot for this turn"
+        },
+        "confidence": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "cube_state": {
+      "type": "object",
+      "required": ["final_value"],
+      "properties": {
+        "snapped": { "type": "boolean", "default": false },
+        "final_value": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8,
+          "description": "cube multiplier at game end (1, 2, 4, 8)"
+        },
+        "snap_turn": {
+          "type": ["integer", "null"],
+          "description": "turn when snap occurred, null if no snap"
+        },
+        "snap_player": {
+          "type": ["string", "null"],
+          "enum": ["player", "opponent", null]
+        }
+      }
+    },
+    "confidence_scores": {
+      "type": "object",
+      "description": "aggregate confidence for each extraction category",
+      "properties": {
+        "classification": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "locations": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "cards": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "outcome": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "overall": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    }
+  }
+}

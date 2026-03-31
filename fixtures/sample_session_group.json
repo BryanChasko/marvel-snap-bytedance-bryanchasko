@@ -1,0 +1,32 @@
+{
+  "description": "two games detected from a batch of screenshots, grouped by 10-minute timestamp windows",
+  "groups": [
+    {
+      "session_index": 0,
+      "screenshot_count": 5,
+      "session_start": "2026-03-15T14:20:45Z",
+      "session_end": "2026-03-15T14:24:30Z",
+      "duration_seconds": 225,
+      "screenshots": [
+        { "filename": "IMG_20260315_142045.png", "exif_timestamp": "2026-03-15T14:20:45Z", "classified_as_snap": true },
+        { "filename": "IMG_20260315_142112.png", "exif_timestamp": "2026-03-15T14:21:12Z", "classified_as_snap": true },
+        { "filename": "IMG_20260315_142301.png", "exif_timestamp": "2026-03-15T14:23:01Z", "classified_as_snap": true },
+        { "filename": "IMG_20260315_142345.png", "exif_timestamp": "2026-03-15T14:23:45Z", "classified_as_snap": true },
+        { "filename": "IMG_20260315_142430.png", "exif_timestamp": "2026-03-15T14:24:30Z", "classified_as_snap": true }
+      ]
+    },
+    {
+      "session_index": 1,
+      "screenshot_count": 3,
+      "session_start": "2026-03-15T14:42:10Z",
+      "session_end": "2026-03-15T14:45:55Z",
+      "duration_seconds": 225,
+      "screenshots": [
+        { "filename": "IMG_20260315_144210.png", "exif_timestamp": "2026-03-15T14:42:10Z", "classified_as_snap": true },
+        { "filename": "IMG_20260315_144401.png", "exif_timestamp": "2026-03-15T14:44:01Z", "classified_as_snap": true },
+        { "filename": "IMG_20260315_144555.png", "exif_timestamp": "2026-03-15T14:45:55Z", "classified_as_snap": true }
+      ]
+    }
+  ],
+  "ungrouped": []
+}

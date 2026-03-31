@@ -1,0 +1,148 @@
+{
+  "game_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "schema_version": "1.0.0",
+  "player_deck": ["Iron Man", "Ant Man", "Mystique", "Onslaught", "Blue Marvel", "Spectrum", "Cosmo", "Armor", "Mister Fantastic", "Captain America", "Klaw", "Jessica Jones"],
+  "opponent_deck": null,
+  "locations": [
+    {
+      "index": 0,
+      "name": "Ruins",
+      "name_confidence": 0.91,
+      "revealed_turn": 1,
+      "player_cards": ["Ant Man", "Mister Fantastic"],
+      "opponent_cards": ["Medusa"],
+      "player_power": 5,
+      "opponent_power": 4
+    },
+    {
+      "index": 1,
+      "name": "The Raft",
+      "name_confidence": 0.87,
+      "revealed_turn": 2,
+      "player_cards": ["Iron Man", "Mystique"],
+      "opponent_cards": ["Cosmo", "Professor X"],
+      "player_power": 18,
+      "opponent_power": 12
+    },
+    {
+      "index": 2,
+      "name": "Limbo",
+      "name_confidence": 0.72,
+      "revealed_turn": 3,
+      "player_cards": ["Blue Marvel", "Spectrum"],
+      "opponent_cards": ["Devil Dinosaur"],
+      "player_power": 14,
+      "opponent_power": 10
+    }
+  ],
+  "turns": [
+    {
+      "turn_number": 1,
+      "missing": false,
+      "energy": 1,
+      "player_cards_played": [
+        { "card_name": "Ant Man", "location_index": 0, "energy_cost": 1, "power": 1, "confidence": 0.95 }
+      ],
+      "opponent_cards_played": [],
+      "player_score": 1,
+      "opponent_score": 0,
+      "source_screenshot": "IMG_20260315_142045.png",
+      "confidence": 0.92
+    },
+    {
+      "turn_number": 2,
+      "missing": false,
+      "energy": 2,
+      "player_cards_played": [
+        { "card_name": "Mister Fantastic", "location_index": 0, "energy_cost": 3, "power": 2, "confidence": 0.88 }
+      ],
+      "opponent_cards_played": [
+        { "card_name": "Medusa", "location_index": 0, "energy_cost": 2, "power": 2, "confidence": 0.81 }
+      ],
+      "player_score": 5,
+      "opponent_score": 4,
+      "source_screenshot": "IMG_20260315_142112.png",
+      "confidence": 0.87
+    },
+    {
+      "turn_number": 3,
+      "missing": true,
+      "energy": null,
+      "player_cards_played": [],
+      "opponent_cards_played": [],
+      "player_score": null,
+      "opponent_score": null,
+      "source_screenshot": null,
+      "confidence": null
+    },
+    {
+      "turn_number": 4,
+      "missing": false,
+      "energy": 4,
+      "player_cards_played": [
+        { "card_name": "Iron Man", "location_index": 1, "energy_cost": 5, "power": 0, "confidence": 0.88 }
+      ],
+      "opponent_cards_played": [
+        { "card_name": "Cosmo", "location_index": 1, "energy_cost": 3, "power": 3, "confidence": 0.79 }
+      ],
+      "player_score": 12,
+      "opponent_score": 8,
+      "source_screenshot": "IMG_20260315_142301.png",
+      "confidence": 0.85
+    },
+    {
+      "turn_number": 5,
+      "missing": false,
+      "energy": 5,
+      "player_cards_played": [
+        { "card_name": "Blue Marvel", "location_index": 2, "energy_cost": 5, "power": 3, "confidence": 0.90 }
+      ],
+      "opponent_cards_played": [
+        { "card_name": "Devil Dinosaur", "location_index": 2, "energy_cost": 5, "power": 10, "confidence": 0.76 }
+      ],
+      "player_score": 24,
+      "opponent_score": 18,
+      "source_screenshot": "IMG_20260315_142345.png",
+      "confidence": 0.84
+    },
+    {
+      "turn_number": 6,
+      "missing": false,
+      "energy": 6,
+      "player_cards_played": [
+        { "card_name": "Mystique", "location_index": 1, "energy_cost": 3, "power": 0, "confidence": 0.91 },
+        { "card_name": "Spectrum", "location_index": 2, "energy_cost": 6, "power": 2, "confidence": 0.86 }
+      ],
+      "opponent_cards_played": [
+        { "card_name": "Professor X", "location_index": 1, "energy_cost": 5, "power": 3, "confidence": 0.82 }
+      ],
+      "player_score": 37,
+      "opponent_score": 26,
+      "source_screenshot": "IMG_20260315_142430.png",
+      "confidence": 0.88
+    }
+  ],
+  "cube_state": {
+    "snapped": true,
+    "final_value": 4,
+    "snap_turn": 5,
+    "snap_player": "player"
+  },
+  "outcome": "win",
+  "source_screenshots": [
+    "IMG_20260315_142045.png",
+    "IMG_20260315_142112.png",
+    "IMG_20260315_142301.png",
+    "IMG_20260315_142345.png",
+    "IMG_20260315_142430.png"
+  ],
+  "confidence_scores": {
+    "classification": 0.94,
+    "locations": 0.83,
+    "cards": 0.87,
+    "outcome": 0.91,
+    "overall": 0.86
+  },
+  "session_start": "2026-03-15T14:20:45Z",
+  "session_end": "2026-03-15T14:24:30Z"
+}

@@ -10,9 +10,15 @@ credentials.json
 token.json
 client_secret*.json
 
-# Ignore raw screenshots (may contain PII)
+# Ignore raw and queued screenshots (may contain PII)
 staging/raw/*
 !staging/raw/.gitkeep
+staging/queued/*
+!staging/queued/.gitkeep
+
+# Rust
+target/
+Cargo.lock
 
 # Ignore local model caches
 models/

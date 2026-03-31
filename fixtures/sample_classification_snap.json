@@ -1,0 +1,8 @@
+{
+  "image_path": "IMG_20260315_142301.png",
+  "is_snap": true,
+  "confidence": 0.94,
+  "model": "bytedance/ui-tars-1.5-7b",
+  "timestamp": "2026-03-15T14:23:01Z",
+  "raw_response": "This is a Marvel Snap game screenshot showing turn 4 with three locations revealed."
+}

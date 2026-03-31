@@ -1,0 +1,8 @@
+{
+  "image_path": "IMG_20260315_143012.png",
+  "is_snap": false,
+  "confidence": 0.12,
+  "model": "bytedance/ui-tars-1.5-7b",
+  "timestamp": "2026-03-15T14:30:12Z",
+  "raw_response": "This appears to be a home screen screenshot, not a Marvel Snap game."
+}
