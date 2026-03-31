@@ -1,9 +1,6 @@
-# marvel-snap project extensions — uses persistent HTTP MCP bridges
-# instead of per-session Docker container launchers
-#
-# bridges connect to already-running infra endpoints (heraldstack-infra):
-#   qdrant: 8100 (copywriting), 8101 (writing-inbox), 8102 (shared-knowledge)
-#   valkey: 8110
+# marvel-snap project extensions — lighter set for this project
+# uses container-based launchers (Docker-in-Docker) that work inside goose container
+# bridge launchers (npx supergateway) do not work inside Docker — no Node.js
 #
 # run scripts/snap-setup.sh to verify infra is up before starting a session
 
@@ -43,20 +40,20 @@ extensions:
     args: []
     timeout: 300
 
-  # --- memory (bridges to persistent HTTP endpoints) ---
+  # --- memory (container-based launchers — Docker-in-Docker) ---
 
   qdrant-shared:
     enabled: true
     type: stdio
     name: qdrant-shared
-    cmd: /home/bryanchasko/code/heraldstack/heraldstack-mcp/launchers/bridges/qdrant-shared-knowledge-bridge.sh
-    args: []
+    cmd: /home/bryanchasko/code/heraldstack/heraldstack-mcp/launchers/core/qdrant.sh
+    args: ["shared-knowledge"]
     timeout: 300
 
   valkey:
     enabled: true
     type: stdio
     name: valkey
-    cmd: /home/bryanchasko/code/heraldstack/heraldstack-mcp/launchers/bridges/valkey-bridge.sh
+    cmd: /home/bryanchasko/code/heraldstack/heraldstack-mcp/launchers/core/valkey-mcp.sh
     args: []
     timeout: 120
