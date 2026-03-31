@@ -1,6 +1,7 @@
 # marvel-snap project extensions — lighter set for this project
-# uses container-based launchers (Docker-in-Docker) that work inside goose container
-# bridge launchers (npx supergateway) do not work inside Docker — no Node.js
+# qdrant + valkey use streamable_http transport → connect directly to
+# persistent heraldstack-infra MCP endpoints, zero startup lag
+# github + context7 remain stdio (no persistent HTTP endpoint for these)
 #
 # run scripts/snap-setup.sh to verify infra is up before starting a session
 
@@ -40,20 +41,20 @@ extensions:
     args: []
     timeout: 300
 
-  # --- memory (container-based launchers — Docker-in-Docker) ---
+  # --- memory (streamable_http → persistent heraldstack-infra endpoints) ---
 
   qdrant-shared:
     enabled: true
-    type: stdio
+    type: streamable_http
     name: qdrant-shared
-    cmd: /home/bryanchasko/code/heraldstack/heraldstack-mcp/launchers/core/qdrant.sh
-    args: ["shared-knowledge"]
+    description: qdrant shared-knowledge collection via persistent MCP endpoint
+    uri: http://host.docker.internal:8102/mcp/
     timeout: 300
 
   valkey:
     enabled: true
-    type: stdio
+    type: streamable_http
     name: valkey
-    cmd: /home/bryanchasko/code/heraldstack/heraldstack-mcp/launchers/core/valkey-mcp.sh
-    args: []
+    description: valkey cache via persistent MCP endpoint
+    uri: http://host.docker.internal:8110/mcp
     timeout: 120
