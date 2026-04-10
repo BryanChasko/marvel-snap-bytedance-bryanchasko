@@ -27,7 +27,7 @@ extensions:
     enabled: true
     type: stdio
     name: github
-    cmd: /home/bryanchasko/code/heraldstack/heraldstack-mcp/launchers/core/github.sh
+    cmd: ${HOME}/code/heraldstack/heraldstack-mcp/launchers/core/github.sh
     args: []
     timeout: 300
 
@@ -37,7 +37,7 @@ extensions:
     enabled: true
     type: stdio
     name: context7
-    cmd: /home/bryanchasko/code/heraldstack/heraldstack-mcp/launchers/core/context7.sh
+    cmd: ${HOME}/code/heraldstack/heraldstack-mcp/launchers/core/context7.sh
     args: []
     timeout: 300
 
