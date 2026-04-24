@@ -1,0 +1,32 @@
+steps:
+  validate-schema:
+    image: python:3.12-slim
+    commands:
+      - pip install -q jsonschema
+      - |
+        python3 << 'EOF'
+        import json
+        from jsonschema import validate
+        schema = json.load(open('specs/game-reconstruction/schema.json'))
+        record = json.load(open('fixtures/sample_game_record.json'))
+        validate(record, schema)
+        print('sample_game_record.json validates against schema')
+        EOF
+
+  scan-secrets:
+    image: alpine:latest
+    commands:
+      - |
+        FOUND=0
+        for pattern in 'AKIA[0-9A-Z]{16}' 'sk-[a-zA-Z0-9]{48}' 'ghp_[a-zA-Z0-9]{36}' 'password\s*=' 'secret\s*='; do
+          if grep -rn --include='*.rs' --include='*.toml' --include='*.yaml' --include='*.json' --include='*.md' \
+             -E "$pattern" . 2>/dev/null | grep -v '.woodpecker/ci.yml' | grep -v 'fixtures/'; then
+            echo "potential secret pattern found: $pattern"
+            FOUND=1
+          fi
+        done
+        if [ "$FOUND" -eq 1 ]; then
+          echo "secrets scan failed — review matches above"
+          exit 1
+        fi
+        echo "no secrets detected"
