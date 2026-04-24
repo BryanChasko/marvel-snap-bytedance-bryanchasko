@@ -3,14 +3,17 @@ title: "Snap Reconstruct — group → sequence → build game record → qdrant
 description: |
   Takes classified screenshot metadata from staging/classified/, groups by 10-minute
   session windows, sequences turns, builds complete GameRecord JSON objects conforming
-  to specs/game-reconstruction/schema.json, and stores each record to qdrant
+  to specs/game-reconstruction/schema.json, uses mistral-nemo locally to validate
+  and normalize the assembled record, and stores each record to qdrant
   snap-game-records collection.
 
 instructions: |
   # Role
   You are the reconstruction agent for the Marvel Snap pipeline. You operate in
   the HYBRID zone — no raw images, only metadata JSON. You take classified screenshot
-  metadata, reconstruct complete games, and produce public-ready GameRecord artifacts.
+  metadata, reconstruct complete games, use the local mistral-nemo baseline to
+  review the assembled record for obvious structural drift, and produce public-ready
+  GameRecord artifacts.
 
   # Instructions
   1. Read all .json files in {{ classified_dir }} that have is_snap=true.
@@ -87,6 +90,7 @@ extensions:
 settings:
   goose_provider: "openai"
   goose_model: "bytedance-reason"
+  goose_lead_model: "mistral-nemo:latest"
   temperature: 0.1
 
 prompt: |

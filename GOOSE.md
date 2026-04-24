@@ -16,7 +16,7 @@ staging/raw/ → preprocess (crop, strip EXIF) → classify (bytedance-vision) �
 
 | Zone | What Lives Here | Who Touches It |
 |------|----------------|----------------|
-| LOCAL | google creds, raw screenshots, EXIF data | local agents only (llama3.1:8b) |
+| LOCAL | google creds, raw screenshots, EXIF data | local agents only (`mistral-nemo:latest` baseline) |
 | HYBRID | sanitized game screenshots (no EXIF, cropped) | bytedance models via goose-proxy |
 | PUBLIC | anonymized game records, analysis | the world |
 
@@ -30,12 +30,14 @@ all external model calls go through goose-proxy at localhost:4000
 
 | Alias | Model | Use Case |
 |-------|-------|----------|
-| `bytedance-vision` | bytedance-seed/seed-2.0-mini | screenshot classification, image input support |
-| `bytedance-reason` | bytedance-seed/seed-2.0-lite | game reconstruction, analysis reasoning |
+| `bytedance-vision` | live proxy alias — verify against issue #23 before relying on repo docs | screenshot classification, image input support |
+| `bytedance-reason` | live proxy alias — verify against issue #23 before relying on repo docs | game reconstruction, analysis reasoning |
 
 daily cost cap: $0.01 — enforced by goose-proxy via valkey counter
 
-local models (llama3.1:8b) handle all non-vision work: formatting, orchestration, file operations
+local baseline is `mistral-nemo:latest` for project review, planning, file operations, and repo navigation
+
+`llama3.1:8b` and `llama3.2:3b` may still be useful for cheaper narrow tasks, but they are not the default project driver until they prove themselves on this repo
 
 ## Qdrant Collections
 
@@ -75,16 +77,50 @@ use these for dry-run testing, format validation, recipe development
 
 | Recipe | Lead Model | Worker | What It Does |
 |--------|-----------|--------|-------------|
-| `snap-ingest.yaml` | llama3.1:8b | llama3.1:8b | watch staging dir, queue new screenshots |
-| `snap-classify.yaml` | bytedance-vision | llama3.1:8b | preprocess → classify → extract metadata |
-| `snap-reconstruct.yaml` | bytedance-reason | llama3.1:8b | group → sequence → build game record → qdrant |
-| `snap-pipeline.yaml` | qwen-reason | llama3.1:8b | orchestrator, runs sub-recipes in sequence |
+| `snap-ingest.yaml` | mistral-nemo:latest | mistral-nemo:latest | watch staging dir, queue new screenshots |
+| `snap-classify.yaml` | bytedance-vision | mistral-nemo:latest | preprocess → classify → extract metadata |
+| `snap-reconstruct.yaml` | bytedance-reason | mistral-nemo:latest | group → sequence → build game record → qdrant |
+| `snap-pipeline.yaml` | mistral-nemo:latest | mistral-nemo:latest | orchestrator baseline for local-first tuning runs |
+
+These are the tuning targets for current Goose work, not a claim that every checked-in recipe has already been updated.
+
+## Extension Profiles
+
+first implementation profile: `.goose/extensions/issue-implementation.yaml`
+- builtins + github only
+- use this for the first implementation slice and other local-only issue work
+
+default project profile: `.goose/extensions/full.yaml`
+- general project work after the first bounded implementation slice
+
+docs profile: `.goose/extensions/docs.yaml`
+- adds persistent Context7 for docs-heavy or research-heavy turns
+
+pipeline profile: `.goose/extensions/pipeline.yaml`
+- adds qdrant-shared and valkey for classification, reconstruction, and storage work
+
+For the first Goose implementation run, stay on the default project profile and avoid the heavier profiles unless the issue explicitly needs them.
 
 ## CSWR Requirements
 
 every agent action requires a CSWR: `{ issue_id, spec_id, conversation_id }`
 
 use `prompt-ledger.sh` from the gander repo at task boundaries
+
+for current Goose/Codex collaboration work, keep tasks bounded and reviewable:
+- use issue-backed slices instead of open-ended repo review prompts
+- prefer plan-then-execute behavior for medium-complexity work
+- record trace/session observations when Goose drifts, stalls, or produces weak review output
+- start the first implementation run with `.goose/extensions/issue-implementation.yaml` and `.goose/issue-25-first-run.md`
+
+linked tracking:
+- gander runtime/tuning: `BryanChasko/goosecli-heraldstack-gander#78`
+- this repo alignment slice: `BryanChasko/marvel-snap-bytedance-bryanchasko#37`
+
+first implementation slice:
+- issue `#25` local screenshot preprocessing
+- local-only
+- bounded to the issue acceptance criteria
 
 ## Environment Setup
 
@@ -94,6 +130,8 @@ run `scripts/snap-setup.sh` to validate:
 - valkey reachable
 - goose-proxy health
 - sample fixtures validate against schema
+
+note: if the setup script reports partial readiness or warnings, treat that as a real signal. do not assume the pipeline is runnable end-to-end.
 
 ## What NOT to Do
 

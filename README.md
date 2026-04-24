@@ -30,10 +30,10 @@ The pipeline classifies screenshots, extracts game state (cards, locations, turn
 graph TD
     A[Screenshots] --> B[Local Staging]
     B --> C{Snap?}
-    C -->|Yes| D[UI-TARS 1.5 7B]
+    C -->|Yes| D[bytedance-vision alias]
     C -->|No| E[Archive]
     D --> F[Metadata JSON]
-    F --> G[Seed OSS 36B]
+    F --> G[bytedance-reason alias]
     G --> H[Game Record]
     H --> I[Qdrant]
     I --> J[Analysis Engine]
@@ -62,10 +62,12 @@ Data flows one direction: local → hybrid → public. Never reversed.
 
 ## ByteDance Models (via OpenRouter)
 
-| Model | Alias | Use Case | Cost |
-|-------|-------|----------|------|
-| [UI-TARS 1.5 7B](https://openrouter.ai/bytedance/ui-tars-1.5-7b) | `bytedance-vision` | Screenshot classification, game UI recognition | $0.10/$0.20 per M tokens |
-| [Seed OSS 36B](https://openrouter.ai/bytedance/seed-oss-36b-instruct) | `bytedance-reason` | Game reconstruction, analysis reasoning | TBD |
+Runtime contract is alias-based. The canonical mapping lives in the gander proxy `MODEL_MAP`, not this repo.
+
+| Alias | Current gander proxy target | Use Case | Cost |
+|-------|-----------------------------|----------|------|
+| `bytedance-vision` | `bytedance-seed/seed-2.0-mini` | Screenshot classification, game UI recognition | runtime/provider dependent |
+| `bytedance-reason` | `bytedance-seed/seed-2.0-lite` | Game reconstruction, analysis reasoning | runtime/provider dependent |
 
 Daily cost cap: $0.01. That's ~50-100 classifications per day.
 
@@ -74,8 +76,8 @@ Daily cost cap: $0.01. That's ~50-100 classifications per day.
 | Layer | Recipe | What It Does |
 |-------|--------|--------------|
 | 1. Ingestion | `snap-ingest.yaml` | Watch local folder, queue new screenshots |
-| 2. Classification | `snap-classify.yaml` | Is this Marvel Snap? (UI-TARS) |
-| 3. Reconstruction | `snap-reconstruct.yaml` | Build turn-by-turn game record (Seed OSS) |
+| 2. Classification | `snap-classify.yaml` | Is this Marvel Snap? (via `bytedance-vision`) |
+| 3. Reconstruction | `snap-reconstruct.yaml` | Build turn-by-turn game record (via `bytedance-reason`) |
 | 4. Analysis | `snap-analyze.yaml` | Cube efficiency, deck stats, misplays |
 | 5. Artifacts | `snap-publish.yaml` | Generate public-safe content, open PRs |
 | Orchestrator | `snap-pipeline.yaml` | Run all layers in sequence with CSWR |
@@ -123,6 +125,13 @@ Existing infrastructure leveraged:
 - **Cedar policies** — governance (no-secrets, branch-naming)
 - **Docker hardening** — cap_drop, no-new-privileges, resource limits
 - **38+ MCP launchers** — filesystem, GitHub, vision-server, Qdrant, AWS
+
+## Prompt-Ready Baseline
+
+Before the first serious Goose prompt:
+- run `scripts/snap-setup.sh`
+- if the three snap collections are missing, run `scripts/bootstrap-qdrant-collections.sh`
+- treat gander `goose-proxy.py` as the source of truth for alias resolution
 
 ## Project Governance
 

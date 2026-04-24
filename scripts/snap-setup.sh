@@ -2,7 +2,7 @@
 # snap-setup.sh — validate environment before running the snap pipeline
 # run this before your first recipe execution to confirm all dependencies are ready
 
-set -euo pipefail
+set -uo pipefail
 
 PASS=0
 FAIL=0
@@ -13,10 +13,10 @@ check() {
   local cmd="$2"
   if eval "$cmd" > /dev/null 2>&1; then
     echo "  [ok]  $label"
-    ((PASS++))
+    PASS=$((PASS + 1))
   else
     echo "  [FAIL] $label"
-    ((FAIL++))
+    FAIL=$((FAIL + 1))
   fi
 }
 
@@ -25,10 +25,10 @@ warn() {
   local cmd="$2"
   if eval "$cmd" > /dev/null 2>&1; then
     echo "  [ok]  $label"
-    ((PASS++))
+    PASS=$((PASS + 1))
   else
     echo "  [warn] $label"
-    ((WARN++))
+    WARN=$((WARN + 1))
   fi
 }
 
@@ -47,8 +47,8 @@ echo ""
 # -- infrastructure services --
 echo "infrastructure:"
 check "qdrant reachable (6333)" "curl -sf http://localhost:6333/healthz"
-check "valkey reachable (6379)" "redis-cli -p 6379 ping"
-warn "goose-proxy reachable (4000)" "curl -sf http://localhost:4000/health"
+warn "valkey reachable via MCP (8110)" "curl -sf -X POST http://localhost:8110/mcp -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"id\":\"snap-setup\",\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-03-26\",\"capabilities\":{},\"clientInfo\":{\"name\":\"snap-setup\",\"version\":\"1.0.0\"}}}'"
+warn "goose-proxy reachable (4000)" "curl -sf http://localhost:4000/ready"
 echo ""
 
 # -- qdrant collections --
@@ -56,6 +56,7 @@ echo "qdrant collections:"
 for coll in snap-game-records snap-analysis snap-screenshots; do
   warn "collection: $coll" "curl -sf http://localhost:6333/collections/$coll"
 done
+echo "  note: run scripts/bootstrap-qdrant-collections.sh if the snap collections are missing"
 echo ""
 
 # -- schema validation --
@@ -81,6 +82,10 @@ if [ "$FAIL" -gt 0 ]; then
   echo "fix failures before running snap recipes"
   exit 1
 else
-  echo "environment ready"
+  if [ "$WARN" -gt 0 ]; then
+    echo "environment partially ready — review warnings before external-model or qdrant-dependent runs"
+  else
+    echo "environment ready"
+  fi
   exit 0
 fi

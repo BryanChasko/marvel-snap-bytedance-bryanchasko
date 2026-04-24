@@ -37,8 +37,10 @@ AND SHALL NOT log request or response bodies.
 
 WHEN the proxy starts
 THE SYSTEM SHALL include ByteDance models in the MODEL_MAP:
-- `bytedance-vision` → `bytedance/ui-tars-1.5-7b`
-- `bytedance-reason` → `bytedance/seed-oss-36b-instruct`
+- `bytedance-vision` → the current proxy-defined ByteDance vision target
+- `bytedance-reason` → the current proxy-defined ByteDance reasoning target
+
+The canonical mapping lives in `goosecli-heraldstack-gander/goose-proxy.py` and must be verified there before prompts or docs hardcode provider IDs.
 
 ### R6: Circuit Breaker
 

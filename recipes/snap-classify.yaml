@@ -3,6 +3,7 @@ title: "Snap Classify — vision classification + metadata extraction"
 description: |
   For each queued screenshot: strip EXIF + crop (LOCAL zone → HYBRID zone),
   send sanitized image to bytedance-vision for snap/not-snap classification,
+  use mistral-nemo locally to review and normalize the returned payload, then
   extract game metadata (turn, locations, cards) from confirmed snap screenshots,
   and write classification results to staging/classified/.
 
@@ -12,7 +13,8 @@ instructions: |
   the LOCAL→HYBRID boundary. You preprocess raw images (strip EXIF, crop to game
   region) before any external model call. You NEVER send raw images to external
   models. After preprocessing, you call bytedance-vision via goose-proxy for
-  classification and metadata extraction.
+  classification and metadata extraction, then use the local mistral-nemo baseline
+  to normalize outputs and catch obvious schema drift before writing files.
 
   # Instructions
   For each file in {{ queue_dir }}/manifest.jsonl:
@@ -84,6 +86,7 @@ extensions:
 settings:
   goose_provider: "openai"
   goose_model: "bytedance-vision"
+  goose_lead_model: "mistral-nemo:latest"
   temperature: 0.1
 
 prompt: |
