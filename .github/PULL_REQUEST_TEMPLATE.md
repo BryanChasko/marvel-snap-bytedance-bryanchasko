@@ -9,8 +9,8 @@ Which spec/task does this implement? (e.g., `specs/marvel-snap-pipeline/tasks.md
 ## CSWR
 
 - Issue: #
-- Spec: 
-- Branch: 
+- Spec:
+- Branch:
 
 ## Checklist
 
