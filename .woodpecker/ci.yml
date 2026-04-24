@@ -28,14 +28,7 @@ steps:
     image: python:3.12-slim
     commands:
       - pip install -q jsonschema
-      - python3 -c "
-          import json, sys
-          from jsonschema import validate
-          schema = json.load(open('specs/game-reconstruction/schema.json'))
-          record = json.load(open('fixtures/sample_game_record.json'))
-          validate(record, schema)
-          print('sample_game_record.json validates against schema')
-        "
+      - python3 -c "import json; from jsonschema import validate; schema=json.load(open('specs/game-reconstruction/schema.json')); record=json.load(open('fixtures/sample_game_record.json')); validate(record, schema); print('sample_game_record.json validates against schema')"
 
   - name: markdown-lint
     image: davidanson/markdownlint-cli2:v0.14.0
