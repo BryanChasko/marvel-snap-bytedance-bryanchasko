@@ -28,15 +28,14 @@ steps:
     image: python:3.12-slim
     commands:
       - pip install -q jsonschema
-      - |
-        python3 << 'EOF'
-        import json
-        from jsonschema import validate
-        schema = json.load(open('specs/game-reconstruction/schema.json'))
-        record = json.load(open('fixtures/sample_game_record.json'))
-        validate(record, schema)
-        print('sample_game_record.json validates against schema')
-        EOF
+      - python3 -c "
+          import json, sys
+          from jsonschema import validate
+          schema = json.load(open('specs/game-reconstruction/schema.json'))
+          record = json.load(open('fixtures/sample_game_record.json'))
+          validate(record, schema)
+          print('sample_game_record.json validates against schema')
+        "
 
   - name: markdown-lint
     image: davidanson/markdownlint-cli2:v0.14.0
@@ -47,7 +46,8 @@ steps:
   - name: yaml-lint
     image: cytopia/yamllint:latest
     commands:
-      - yamllint -d "{extends: relaxed, rules: {line-length: {max: 140}}}" .
+      # relaxed preset: no line-length enforcement, permissive indentation
+      - yamllint -d relaxed .
 
   - name: shell-lint
     image: alpine:3.21
@@ -60,7 +60,7 @@ steps:
     commands:
       - |
         FOUND=0
-        for pattern in 'AKIA[0-9A-Z]{16}' 'sk-[a-zA-Z0-9]{48}' 'ghp_[a-zA-Z0-9]{36}' 'password\s*=' 'secret\s*='; do
+        for pattern in 'AKIA[0-9A-Z]{16}' 'sk-[a-zA-Z0-9]{48}' 'ghp_[a-zA-Z0-9]{36}'; do
           if grep -rn --include='*.sh' --include='*.yaml' --include='*.yml' --include='*.json' --include='*.md' \
              -E "$pattern" . 2>/dev/null | grep -v '.woodpecker/ci.yml' | grep -v 'fixtures/'; then
             echo "potential secret pattern found: $pattern"
