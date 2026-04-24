@@ -58,7 +58,7 @@ extensions:
 
 settings:
   goose_provider: "ollama"
-  goose_model: "llama3.1:8b"
+  goose_model: "mistral-nemo:latest"
   temperature: 0.1
 
 prompt: |

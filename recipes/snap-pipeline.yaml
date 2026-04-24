@@ -3,7 +3,8 @@ title: "Snap Pipeline — full orchestrator"
 description: |
   Orchestrates the full Marvel Snap Cybernetic Loop: ingest → classify → reconstruct.
   Runs snap-ingest, then snap-classify, then snap-reconstruct in sequence.
-  Uses qwen-reason for orchestration decisions. Sub-recipes handle their own models.
+  Uses mistral-nemo for local-first orchestration decisions. Sub-recipes handle
+  their own external model calls where needed.
   Reports a pipeline summary on completion.
 
 instructions: |
@@ -11,7 +12,8 @@ instructions: |
   You are the snap pipeline orchestrator. You coordinate three sub-recipe phases in
   sequence: ingest, classify, reconstruct. You do not process images or build game
   records yourself — you dispatch to sub-recipes, collect results, and surface the
-  pipeline summary. You run on qwen-reason for decision-making.
+  pipeline summary. You run on the local mistral-nemo baseline for decision-making
+  unless a later tuning pass proves a remote lead is required.
 
   # Instructions
   Run the three pipeline phases in sequence. After each phase: check the result.
@@ -112,8 +114,8 @@ extensions:
     timeout: 300
 
 settings:
-  goose_provider: "openai"
-  goose_model: "qwen-reason"
+  goose_provider: "ollama"
+  goose_model: "mistral-nemo:latest"
   temperature: 0.2
 
 prompt: |

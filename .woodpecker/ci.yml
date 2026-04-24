@@ -24,8 +24,46 @@ when:
         - .woodpecker/**
 
 steps:
+  - name: tier-0-draft-gate
+    image: alpine:3.21
+    commands:
+      - |
+        if [ "${CI_COMMIT_PULL_REQUEST_DRAFT}" = "true" ]; then
+          echo "draft pr — halting"
+          exit 1
+        fi
+    failure: fail
+    when:
+      - event: [pull_request, push, manual]
+
+  - name: tier-0-skip-ci-gate
+    image: alpine:3.21
+    commands:
+      - |
+        if echo "${CI_COMMIT_MESSAGE}" | grep -qi '\[skip ci\]\|\[ci skip\]'; then
+          echo "[skip ci] detected — halting"
+          exit 1
+        fi
+    failure: fail
+    depends_on: [tier-0-draft-gate]
+    when:
+      - event: [pull_request, push, manual]
+
+  - name: tier-0-metadata
+    image: alpine:3.21
+    commands:
+      - |
+        echo "branch: ${CI_COMMIT_BRANCH}"
+        echo "commit: ${CI_COMMIT_SHA:0:8}"
+        echo "author: ${CI_COMMIT_AUTHOR}"
+        echo "event: ${CI_PIPELINE_EVENT}"
+    depends_on: [tier-0-skip-ci-gate]
+    when:
+      - event: [pull_request, push, manual]
+
   - name: validate-schema
     image: python:3.12-slim
+    depends_on: [tier-0-metadata]
     commands:
       - pip install -q jsonschema
       - python3 -c "import json; from jsonschema import validate; schema=json.load(open('specs/game-reconstruction/schema.json')); record=json.load(open('fixtures/sample_game_record.json')); validate(record, schema); print('sample_game_record.json validates against schema')"

@@ -52,6 +52,6 @@ AND this storage event marks the screenshot as "processing complete" per the ing
 
 Sub-recipe `snap-reconstruct.yaml` invoked by `snap-pipeline.yaml` orchestrator.
 
-- Lead model: `bytedance-reason` (Seed OSS 36B for reasoning over structured metadata)
-- Worker model: `llama3.1:8b` (local, for JSON assembly)
+- Lead model: `bytedance-reason` (resolved by the gander proxy `MODEL_MAP`)
+- Worker model: `mistral-nemo:latest` (local, for JSON assembly and review)
 - MCP extensions: qdrant-shared-knowledge (store/query game records), filesystem

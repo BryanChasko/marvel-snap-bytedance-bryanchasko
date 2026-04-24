@@ -1,12 +1,10 @@
-# marvel-snap project extensions — lighter set for this project
-# qdrant + valkey use streamable_http transport → connect directly to
-# persistent heraldstack-infra MCP endpoints, zero startup lag
-# github + context7 remain stdio (no persistent HTTP endpoint for these)
+# marvel-snap project extensions — lean default set for first implementation work
+# this default profile is intentionally local-first and issue-friendly:
+# builtins + github only, no memory or docs MCPs unless the task actually needs them
 #
 # run scripts/snap-setup.sh to verify infra is up before starting a session
 
 extensions:
-
   # --- core (builtins) ---
 
   developer:

@@ -46,19 +46,19 @@ Each pipeline layer is a sub-recipe invoked by `snap-pipeline.yaml` orchestrator
 
 | Layer | Sub-recipe | Lead Model | Worker Model | MCP Extensions |
 |-------|-----------|-----------|-------------|----------------|
-| 1: Ingestion | `snap-ingest.yaml` | llama3.1:8b | llama3.1:8b | filesystem |
-| 2: Classification | `snap-classify.yaml` | bytedance-vision | llama3.1:8b | filesystem, qdrant |
-| 3: Reconstruction | `snap-reconstruct.yaml` | bytedance-reason | llama3.1:8b | qdrant, filesystem |
-| 4: Analysis | `snap-analyze.yaml` | bytedance-reason | llama3.1:8b | qdrant |
-| 5: Artifacts | `snap-publish.yaml` | llama3.1:8b | llama3.1:8b | github, filesystem |
-| Orchestrator | `snap-pipeline.yaml` | qwen-reason | llama3.1:8b | all |
+| 1: Ingestion | `snap-ingest.yaml` | mistral-nemo:latest | mistral-nemo:latest | filesystem |
+| 2: Classification | `snap-classify.yaml` | bytedance-vision | mistral-nemo:latest | filesystem, qdrant |
+| 3: Reconstruction | `snap-reconstruct.yaml` | bytedance-reason | mistral-nemo:latest | qdrant, filesystem |
+| 4: Analysis | `snap-analyze.yaml` | bytedance-reason | mistral-nemo:latest | qdrant |
+| 5: Artifacts | `snap-publish.yaml` | mistral-nemo:latest | mistral-nemo:latest | github, filesystem |
+| Orchestrator | `snap-pipeline.yaml` | mistral-nemo:latest | mistral-nemo:latest | all |
 
 ## Model Routing (goose-proxy.py additions)
 
 | Alias | Provider | Model ID |
 |-------|----------|----------|
-| `bytedance-vision` | OpenRouter | `bytedance/ui-tars-1.5-7b` |
-| `bytedance-reason` | OpenRouter | `bytedance/seed-oss-36b-instruct` |
+| `bytedance-vision` | OpenRouter | resolved in `goosecli-heraldstack-gander/goose-proxy.py` |
+| `bytedance-reason` | OpenRouter | resolved in `goosecli-heraldstack-gander/goose-proxy.py` |
 
 ## Qdrant Collections
 
@@ -67,3 +67,5 @@ Each pipeline layer is a sub-recipe invoked by `snap-pipeline.yaml` orchestrator
 | `snap-game-records` | Structured JSON game records |
 | `snap-analysis` | Analysis results, matchup data |
 | `snap-screenshots` | Metadata for processed screenshots |
+
+Collections are required for prompt-ready reconstruction runs. If they are missing, bootstrap them before the first Goose execution.

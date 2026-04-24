@@ -20,7 +20,7 @@ AND SHALL NOT send any unprocessed image to an external model.
 ### R2: Snap Classification
 
 WHEN a preprocessed image is ready for classification
-THE SYSTEM SHALL send it to bytedance/ui-tars-1.5-7b via OpenRouter through the goose-proxy
+THE SYSTEM SHALL send it to the `bytedance-vision` alias via OpenRouter through the goose-proxy
 AND return a classification (snap/not-snap) with a confidence score.
 
 ### R3: Metadata Extraction
@@ -52,8 +52,8 @@ AND enforce the $0.01/day cost cap.
 
 Sub-recipe `snap-classify.yaml` invoked by `snap-pipeline.yaml` orchestrator.
 
-- Lead model: `bytedance-vision` (UI-TARS for image analysis)
-- Worker model: `llama3.1:8b` (local, for structured output formatting)
+- Lead model: `bytedance-vision` (resolved by the gander proxy `MODEL_MAP`)
+- Worker model: `mistral-nemo:latest` (local, for structured output formatting and review)
 - MCP extensions: filesystem, qdrant-shared-knowledge
 - Vision-server MCP is local-only — not used in v1. Target for v2 migration to local models.
 
