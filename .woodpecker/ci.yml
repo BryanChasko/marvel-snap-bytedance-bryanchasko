@@ -1,5 +1,30 @@
+---
+# pipeline: marvel-snap-bytedance
+# stack: docs + specs + fixtures + scripts (no build artifact)
+# template: markdown-lint.yaml + schema-validation + secret-scan
+#
+# hard rules (from woodpecker-templates/README.md):
+#   - no failure: ignore
+#   - no yaml anchors in multi-line command blocks
+#   - path: singular under when entries
+#   - no volumes: or privileged: in step yaml
+
+when:
+  - event: [pull_request, push, manual]
+    branch: main
+    path:
+      include:
+        - "**/*.md"
+        - "**/*.yml"
+        - "**/*.yaml"
+        - "**/*.sh"
+        - "**/*.json"
+        - specs/**
+        - fixtures/**
+        - .woodpecker/**
+
 steps:
-  validate-schema:
+  - name: validate-schema
     image: python:3.12-slim
     commands:
       - pip install -q jsonschema
@@ -13,20 +38,37 @@ steps:
         print('sample_game_record.json validates against schema')
         EOF
 
-  scan-secrets:
+  - name: markdown-lint
+    image: davidanson/markdownlint-cli2:v0.14.0
+    commands:
+      # no failure: ignore -- if real lint issues appear, tune .markdownlint.json
+      - markdownlint-cli2 "**/*.md"
+
+  - name: yaml-lint
+    image: cytopia/yamllint:latest
+    commands:
+      - yamllint -d "{extends: relaxed, rules: {line-length: {max: 140}}}" .
+
+  - name: shell-lint
+    image: alpine:3.21
+    commands:
+      - apk add --no-cache shellcheck >/dev/null
+      - find . -type f -name "*.sh" -not -path "./.git/*" -print0 | xargs -0 -r shellcheck
+
+  - name: scan-secrets
     image: alpine:latest
     commands:
       - |
         FOUND=0
         for pattern in 'AKIA[0-9A-Z]{16}' 'sk-[a-zA-Z0-9]{48}' 'ghp_[a-zA-Z0-9]{36}' 'password\s*=' 'secret\s*='; do
-          if grep -rn --include='*.rs' --include='*.toml' --include='*.yaml' --include='*.json' --include='*.md' \
+          if grep -rn --include='*.sh' --include='*.yaml' --include='*.yml' --include='*.json' --include='*.md' \
              -E "$pattern" . 2>/dev/null | grep -v '.woodpecker/ci.yml' | grep -v 'fixtures/'; then
             echo "potential secret pattern found: $pattern"
             FOUND=1
           fi
         done
         if [ "$FOUND" -eq 1 ]; then
-          echo "secrets scan failed — review matches above"
+          echo "secrets scan failed - review matches above"
           exit 1
         fi
         echo "no secrets detected"
